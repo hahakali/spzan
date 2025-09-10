@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/carousel';
 import { VideoPlayer } from '@/components/video-player';
 import type { Video } from '@/lib/types';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 
 
@@ -18,6 +18,7 @@ export default function Home() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -37,11 +38,11 @@ export default function Home() {
     if (!api) {
       return;
     }
-    setCurrent(api.selectedScrollSnap());
     const handleSelect = () => {
       setCurrent(api.selectedScrollSnap());
     };
     api.on('select', handleSelect);
+    handleSelect(); // Set initial value
     return () => {
       api.off('select', handleSelect);
     };
@@ -52,6 +53,10 @@ export default function Home() {
       api.scrollNext();
     }
   };
+
+  const handlePlay = useCallback((videoId: string) => {
+    setPlayingVideoId(videoId);
+  }, []);
 
   if (loading) {
     return (
@@ -72,12 +77,14 @@ export default function Home() {
           loop: true,
         }}
       >
-        <CarouselContent className="h-full">
+        <CarouselContent className="h-full -mt-0">
           {videos.map((video, index) => (
             <CarouselItem key={video.id} className="relative h-full w-full p-0">
               <VideoPlayer
                 video={video}
                 isActive={index === current}
+                isPlaying={playingVideoId === video.id}
+                onPlay={handlePlay}
                 onVideoEnd={handleVideoEnd}
               />
             </CarouselItem>
