@@ -75,11 +75,13 @@ export default function Home() {
         className="h-full w-full"
         opts={{
           loop: true,
+          align: "start",
+          dragFree: false,
         }}
       >
-        <CarouselContent className="h-full -mt-0">
+        <CarouselContent className="h-full">
           {videos.map((video, index) => (
-            <CarouselItem key={video.id} className="relative h-full w-full p-0">
+            <CarouselItem key={video.id} className="p-0">
               <VideoPlayer
                 video={video}
                 isActive={index === current}
