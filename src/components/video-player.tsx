@@ -46,10 +46,12 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
 
   useEffect(() => {
     if (isActive) {
-      setIsPlaying(true);
-      if (videoRef.current) {
-        videoRef.current.muted = isMuted; // Ensure mute state is respected
-        videoRef.current.play().catch(e => console.log("Autoplay was prevented"));
+      if (video.type !== 'paid') {
+        setIsPlaying(true);
+        if (videoRef.current) {
+          videoRef.current.muted = isMuted; // Ensure mute state is respected
+          videoRef.current.play().catch(e => console.log("Autoplay was prevented"));
+        }
       }
     } else {
       setIsPlaying(false);
@@ -58,7 +60,7 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
         videoRef.current.currentTime = 0;
       }
     }
-  }, [isActive, isMuted]);
+  }, [isActive, isMuted, video.type]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -193,10 +195,10 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
       {isPaidLocked && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm z-10">
           <Lock className="h-16 w-16 text-primary mb-4" />
-          <h3 className="text-2xl font-bold text-white mb-2">Premium Content</h3>
-          <p className="text-neutral-300 mb-6">Unlock this video to watch.</p>
+          <h3 className="text-2xl font-bold text-white mb-2">付费内容</h3>
+          <p className="text-neutral-300 mb-6">解锁此视频即可观看。</p>
           <Button size="lg" onClick={(e) => { e.stopPropagation(); setShowUnlockDialog(true);}}>
-            Unlock Now
+            立即解锁
           </Button>
         </div>
       )}
@@ -247,18 +249,18 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
        <Dialog open={showUnlockDialog} onOpenChange={setShowUnlockDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Unlock Premium Content</DialogTitle>
+            <DialogTitle>解锁付费内容</DialogTitle>
             <DialogDescription>
-              To watch this video, please complete the payment process. This is a one-time purchase for this video.
+              要观看此视频，请完成付款。这是该视频的一次性购买。
             </DialogDescription>
           </DialogHeader>
           <div className='my-4 p-4 border rounded-lg'>
             <h4 className='font-bold'>{video.title}</h4>
-            <p className='text-sm text-muted-foreground mt-1'>Price: $2.99</p>
+            <p className='text-sm text-muted-foreground mt-1'>价格: $2.99</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUnlockDialog(false)}>Cancel</Button>
-            <Button onClick={handleUnlock}><Lock className='mr-2 h-4 w-4' /> Pay & Watch</Button>
+            <Button variant="outline" onClick={() => setShowUnlockDialog(false)}>取消</Button>
+            <Button onClick={handleUnlock}><Lock className='mr-2 h-4 w-4' /> 付款并观看</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
