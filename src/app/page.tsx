@@ -11,7 +11,6 @@ import { VideoPlayer } from '@/components/video-player';
 import type { Video } from '@/lib/types';
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import Autoplay from "embla-carousel-autoplay"
 
 
 export default function Home() {
