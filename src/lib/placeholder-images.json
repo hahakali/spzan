@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "big-buck-bunny",
+      "description": "Big Buck Bunny thumbnail",
+      "imageUrl": "https://picsum.photos/seed/bunny/800/450",
+      "imageHint": "bunny nature"
+    },
+    {
+      "id": "elephants-dream",
+      "description": "Elephants Dream thumbnail",
+      "imageUrl": "https://picsum.photos/seed/elephants/800/450",
+      "imageHint": "abstract dark"
+    },
+    {
+      "id": "for-bigger-blazes",
+      "description": "For Bigger Blazes thumbnail",
+      "imageUrl": "https://picsum.photos/seed/blazes/800/450",
+      "imageHint": "fire animation"
+    },
+    {
+      "id": "for-bigger-escapes",
+      "description": "For Bigger Escapes thumbnail",
+      "imageUrl": "https://picsum.photos/seed/escapes/800/450",
+      "imageHint": "adventure mountain"
+    },
+    {
+      "id": "for-bigger-fun",
+      "description": "For Bigger Fun thumbnail",
+      "imageUrl": "https://picsum.photos/seed/fun/800/450",
+      "imageHint": "party colorful"
+    },
+    {
+      "id": "for-bigger-joyrides",
+      "description": "For Bigger Joyrides thumbnail",
+      "imageUrl": "https://picsum.photos/seed/joyrides/800/450",
+      "imageHint": "car race"
+    },
+    {
+      "id": "sintel",
+      "description": "Sintel movie thumbnail",
+      "imageUrl": "https://picsum.photos/seed/sintel/800/450",
+      "imageHint": "fantasy warrior"
+    }
+  ]
 }
