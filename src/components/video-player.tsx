@@ -24,7 +24,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from './ui/badge';
-import Image from 'next/image';
 
 interface VideoPlayerProps {
   video: Video;
@@ -45,22 +44,18 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (isActive) {
-      if (video.type !== 'paid') {
-        setIsPlaying(true);
-        if (videoRef.current) {
-          videoRef.current.muted = isMuted; // Ensure mute state is respected
-          videoRef.current.play().catch(e => console.log("Autoplay was prevented"));
-        }
-      }
-    } else {
-      setIsPlaying(false);
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
+    const videoElement = videoRef.current;
+    if (videoElement) {
+      videoElement.muted = isMuted;
     }
-  }, [isActive, isMuted, video.type]);
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (!isActive && videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  }, [isActive]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -79,12 +74,16 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
     };
     const handleWaiting = () => setIsBuffering(true);
     const handlePlaying = () => setIsBuffering(false);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
 
     videoElement.addEventListener('timeupdate', handleTimeUpdate);
     videoElement.addEventListener('durationchange', handleDurationChange);
     videoElement.addEventListener('ended', handleEnded);
     videoElement.addEventListener('waiting', handleWaiting);
     videoElement.addEventListener('playing', handlePlaying);
+    videoElement.addEventListener('play', handlePlay);
+    videoElement.addEventListener('pause', handlePause);
 
     return () => {
       videoElement.removeEventListener('timeupdate', handleTimeUpdate);
@@ -92,6 +91,8 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
       videoElement.removeEventListener('ended', handleEnded);
       videoElement.removeEventListener('waiting', handleWaiting);
       videoElement.removeEventListener('playing', handlePlaying);
+      videoElement.removeEventListener('play', handlePlay);
+      videoElement.removeEventListener('pause', handlePause);
     };
   }, [onVideoEnd, isBuffering]);
 
@@ -101,12 +102,11 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
         return;
     }
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
+      if (videoRef.current.paused) {
         videoRef.current.play();
+      } else {
+        videoRef.current.pause();
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -153,7 +153,6 @@ export function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayerProps) {
     setShowUnlockDialog(false);
     if (videoRef.current) {
         videoRef.current.play();
-        setIsPlaying(true);
     }
   }
 
