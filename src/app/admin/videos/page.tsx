@@ -1,8 +1,20 @@
 import { getVideos } from '@/lib/data';
 import { VideoTable } from './video-table';
 
-export default async function VideosPage() {
-  const videos = await getVideos();
+export default async function VideosPage({
+  searchParams,
+}: {
+  searchParams?: {
+    query?: string;
+    page?: string;
+  };
+}) {
+  const query = searchParams?.query || '';
+  // In a real app, you'd fetch filtered videos. We'll filter the mock data.
+  const allVideos = await getVideos();
+  const filteredVideos = allVideos.filter(video => 
+    video.title.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -14,7 +26,7 @@ export default async function VideosPage() {
           在这里添加、编辑和管理您的视频内容。
         </p>
       </div>
-      <VideoTable initialVideos={videos} />
+      <VideoTable initialVideos={filteredVideos} />
     </div>
   );
 }

@@ -1,50 +1,73 @@
 'use server';
 
-import { classifyVideoContent } from '@/ai/flows/classify-video-content';
 import { revalidatePath } from 'next/cache';
 import type { Video } from '@/lib/types';
-import { videos as mockVideos } from '@/lib/data';
 
-export async function addVideoAction(data: { title: string, description: string, type: 'free' | 'paid' }) {
-  console.log('Adding video:', data);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9002';
 
+async function handleApiResponse(response: Response) {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || 'An unknown API error occurred');
+  }
+  return response.json();
+}
+
+export async function addVideoAction(formData: FormData) {
   try {
-    const classification = await classifyVideoContent({
-      title: data.title,
-      description: data.description,
+    const response = await fetch(`${API_BASE_URL}/api/videos`, {
+      method: 'POST',
+      body: formData,
     });
-
-    console.log('AI Classification:', classification);
-
-    const newVideo: Video = {
-      id: (mockVideos.length + 1).toString(),
-      title: data.title,
-      description: data.description,
-      type: data.type,
-      category: classification.category,
-      src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-      thumbnail: `https://picsum.photos/seed/${encodeURIComponent(data.title)}/800/450`,
-      views: 0,
-      uploadDate: new Date().toISOString().split('T')[0],
-    };
     
-    // In a real app, you would save this to your database.
-    // We are not persisting data in this example.
-    console.log('Mock new video (not persisted):', newVideo);
+    const result = await handleApiResponse(response);
     
     revalidatePath('/admin/videos');
-    
-    return { success: true, message: `Video added & classified as '${classification.category}'.` };
+    return { success: true, message: `Video added & classified as '${result.category}'.` };
   } catch (error) {
-    console.error('Error adding video:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return { success: false, message: `Failed to add video: ${errorMessage}` };
   }
 }
 
-export async function updateVideoAction(id: string, data: { title: string, description: string, type: 'free' | 'paid' }) {
-  console.log('Updating video:', id, data);
-  // In a real app, you'd update the video in the database.
-  revalidatePath('/admin/videos');
-  return { success: true, message: 'Video updated successfully.' };
+export async function updateVideoAction(id: string, formData: FormData) {
+   try {
+    // We don't send the file on update for now.
+    // A more complex implementation could handle partial updates.
+    const data = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        type: formData.get('type'),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/api/videos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    await handleApiResponse(response);
+    
+    revalidatePath('/admin/videos');
+    return { success: true, message: 'Video updated successfully.' };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return { success: false, message: `Failed to update video: ${errorMessage}` };
+  }
+}
+
+export async function deleteVideoAction(id: string) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/videos/${id}`, {
+            method: 'DELETE',
+        });
+        
+        await handleApiResponse(response);
+        
+        revalidatePath('/admin/videos');
+        return { success: true, message: 'Video deleted successfully.' };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { success: false, message: `Failed to delete video: ${errorMessage}` };
+    }
 }
