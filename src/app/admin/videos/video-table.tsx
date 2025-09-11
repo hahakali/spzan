@@ -52,20 +52,20 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
       <div className="flex justify-end mb-4">
         <Button onClick={handleAddVideo}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Video
+          添加视频
         </Button>
       </div>
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Thumbnail</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Upload Date</TableHead>
-              <TableHead className="w-[50px] text-right">Actions</TableHead>
+              <TableHead className="w-[80px]">缩略图</TableHead>
+              <TableHead>标题</TableHead>
+              <TableHead>类型</TableHead>
+              <TableHead>分类</TableHead>
+              <TableHead>观看次数</TableHead>
+              <TableHead>上传日期</TableHead>
+              <TableHead className="w-[50px] text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -84,7 +84,7 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
                 <TableCell className="font-medium">{video.title}</TableCell>
                 <TableCell>
                   <Badge variant={video.type === 'paid' ? 'destructive' : 'secondary'}>
-                    {video.type}
+                    {video.type === 'paid' ? '付费' : '免费'}
                   </Badge>
                 </TableCell>
                 <TableCell>{video.category || 'N/A'}</TableCell>
@@ -94,18 +94,18 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                        <span className="sr-only">打开菜单</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEditVideo(video)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                        编辑
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        删除
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -119,7 +119,7 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{selectedVideo ? 'Edit Video' : 'Add New Video'}</DialogTitle>
+            <DialogTitle>{selectedVideo ? '编辑视频' : '添加新视频'}</DialogTitle>
           </DialogHeader>
           <VideoForm
             video={selectedVideo}

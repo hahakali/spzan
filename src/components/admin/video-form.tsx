@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,10 +23,31 @@ import { addVideoAction, updateVideoAction } from '@/app/admin/videos/actions';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters long.'),
-  description: z.string().min(10, 'Description must be at least 10 characters long.'),
-  type: z.enum(['free', 'paid']),
+  title: z.string().min(3, '标题必须至少包含3个字符。'),
+  description: z.string().min(10, '描述必须至少包含10个字符。'),
+  type: z.enum(['free', 'paid'], { required_error: '请选择内容类型。' }),
+  videoFile: z
+    .instanceof(File)
+    .refine((file) => file.size > 0, '请选择一个视频文件。')
+    .refine((file) => file.size < 100 * 1024 * 1024, '视频文件不能超过100MB。')
+    .refine(
+      (file) => ['video/mp4', 'video/quicktime', 'video/x-msvideo'].includes(file.type),
+      '只支持 MP4, MOV, AVI 格式。'
+    ).optional(), // Make it optional for edit mode
+}).refine(data => {
+    // If it's a new video (no video prop), videoFile is required.
+    // In edit mode, we don't require a new file upload.
+    return data.videoFile !== undefined;
+}, {
+    message: "请选择一个视频文件进行上传。",
+    path: ["videoFile"],
 });
+
+// We create a different schema for editing, where the file is not required.
+const editFormSchema = formSchema.omit({ videoFile: true }).extend({
+    videoFile: formSchema.shape.videoFile.optional(),
+});
+
 
 interface VideoFormProps {
   video: Video | null;
@@ -35,8 +57,11 @@ interface VideoFormProps {
 export function VideoForm({ video, onSuccess }: VideoFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  
+  const currentSchema = video ? editFormSchema : formSchema;
+
+  const form = useForm<z.infer<typeof currentSchema>>({
+    resolver: zodResolver(currentSchema),
     defaultValues: {
       title: video?.title || '',
       description: video?.description || '',
@@ -44,36 +69,69 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof currentSchema>) {
     setIsSubmitting(true);
-    try {
-      let result;
-      if (video) {
-        result = await updateVideoAction(video.id, values);
-      } else {
-        result = await addVideoAction(values);
-      }
-      
-      if (result.success) {
-        toast({
-          title: 'Success!',
-          description: result.message,
-        });
-        onSuccess();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: errorMessage,
-        });
-    } finally {
-        setIsSubmitting(false);
+    
+    // In a real app, you would handle file upload to a server/cloud storage.
+    // Here, we simulate the action and use a placeholder.
+    if (video) { // Editing existing video
+        try {
+            const result = await updateVideoAction(video.id, {
+              title: values.title,
+              description: values.description,
+              type: values.type,
+            });
+             if (result.success) {
+                toast({
+                  title: '成功!',
+                  description: result.message,
+                });
+                onSuccess();
+              } else {
+                throw new Error(result.message);
+              }
+        } catch (error) {
+             const errorMessage = error instanceof Error ? error.message : '发生未知错误';
+             toast({
+              variant: 'destructive',
+              title: '错误',
+              description: errorMessage,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    } else { // Adding a new video
+        try {
+            // This is where you'd typically handle the file upload via an API route.
+            // For now, we'll continue using the server action which simulates the process.
+             const result = await addVideoAction({
+              title: values.title,
+              description: values.description,
+              type: values.type,
+            });
+            if (result.success) {
+                toast({
+                  title: '成功!',
+                  description: result.message,
+                });
+                onSuccess();
+              } else {
+                throw new Error(result.message);
+              }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : '发生未知错误';
+            toast({
+              variant: 'destructive',
+              title: '错误',
+              description: errorMessage,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
   }
+  
+  const fileRef = form.register("videoFile");
 
   return (
     <Form {...form}>
@@ -83,9 +141,9 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>视频标题</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., My Awesome Video" {...field} />
+                <Input placeholder="例如：我的精彩视频" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,20 +154,40 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>视频描述</FormLabel>
               <FormControl>
-                <Textarea placeholder="A detailed description of the video content..." {...field} />
+                <Textarea placeholder="视频内容的详细描述..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        
+        {!video && (
+          <FormField
+            control={form.control}
+            name="videoFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>视频文件</FormLabel>
+                <FormControl>
+                  <Input type="file" accept="video/mp4,video/quicktime,video/x-msvideo" {...fileRef} />
+                </FormControl>
+                <FormDescription>
+                  选择一个视频文件上传 (MP4, MOV, AVI)。
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        
         <FormField
           control={form.control}
           name="type"
           render={({ field }) => (
             <FormItem className="space-y-3">
-              <FormLabel>Content Type</FormLabel>
+              <FormLabel>内容类型</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -120,13 +198,13 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
                     <FormControl>
                       <RadioGroupItem value="free" />
                     </FormControl>
-                    <FormLabel className="font-normal">Free</FormLabel>
+                    <FormLabel className="font-normal">免费</FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-2 space-y-0">
                     <FormControl>
                       <RadioGroupItem value="paid" />
                     </FormControl>
-                    <FormLabel className="font-normal">Paid</FormLabel>
+                    <FormLabel className="font-normal">付费</FormLabel>
                   </FormItem>
                 </RadioGroup>
               </FormControl>
@@ -137,7 +215,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {video ? 'Save Changes' : 'Add Video'}
+            {video ? '保存更改' : '添加视频'}
           </Button>
         </div>
       </form>
