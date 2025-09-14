@@ -8,7 +8,6 @@ import {
   Play,
   Pause,
   Volume2,
-  VolumeX,
   FastForward,
   Rewind,
   Lock,
@@ -37,7 +36,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isPaidLocked, setIsPaidLocked] = useState(video.type === 'paid');
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
@@ -122,13 +121,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       setProgress(newTime);
     }
   }
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -233,9 +225,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
               <span className="text-xs font-mono">
                 {formatTime(progress)} / {formatTime(duration)}
               </span>
-              <Button variant="ghost" size="icon" onClick={toggleMute} className="text-white hover:bg-white/10">
-                {isMuted ? <VolumeX /> : <Volume2 />}
-              </Button>
+              <Volume2 className="text-white" />
             </div>
           </div>
         </div>
