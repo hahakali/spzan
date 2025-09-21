@@ -15,6 +15,7 @@ export async function connectToDatabase() {
     try {
       // Ping the database to check if the connection is still alive
       await cachedClient.db('admin').command({ ping: 1 });
+      // console.log('Reusing existing MongoDB connection.');
       return { client: cachedClient, db: cachedDb };
     } catch (error) {
       console.log('MongoDB connection lost. Reconnecting...');

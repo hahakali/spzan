@@ -10,6 +10,7 @@ import { ObjectId } from 'mongodb';
 export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
+    console.log('API GET /api/videos: Database connection successful.');
     const videos = await db
       .collection<Video>('videos')
       .find()
@@ -21,10 +22,11 @@ export async function GET(request: NextRequest) {
         ...video,
         id: video._id.toString(),
     }));
-
+    
+    console.log(`API GET /api/videos: Found ${formattedVideos.length} videos.`);
     return NextResponse.json(formattedVideos);
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.error('API GET /api/videos Error:', error);
     return NextResponse.json({ message: 'Failed to fetch videos' }, { status: 500 });
   }
 }
@@ -52,10 +54,13 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await videoFile.arrayBuffer());
     await fs.writeFile(filePath, buffer);
-    console.log(`Video saved to: ${filePath}`);
+    console.log(`API POST /api/videos: Video saved to: ${filePath}`);
     
     // --- AI Classification ---
+    console.log('API POST /api/videos: Starting AI classification...');
     const classification = await classifyVideoContent({ title, description });
+    console.log('API POST /api/videos: AI classification result:', classification);
+
 
     const newVideo: Omit<Video, 'id' | '_id'> = {
       title,
@@ -70,7 +75,10 @@ export async function POST(request: NextRequest) {
 
     // --- Database Logic ---
     const { db } = await connectToDatabase();
+    console.log('API POST /api/videos: Database connection successful for insert.');
     const result = await db.collection('videos').insertOne(newVideo);
+    console.log('API POST /api/videos: Video inserted into DB with ID:', result.insertedId);
+
     
     const createdVideo = {
         ...newVideo,
@@ -80,7 +88,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(createdVideo, { status: 201 });
 
   } catch (error) {
-    console.error('Error adding video:', error);
+    console.error('API POST /api/videos Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ message: `Failed to add video: ${errorMessage}` }, { status: 500 });
   }
