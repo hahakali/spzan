@@ -1,7 +1,7 @@
 import type { Video, UserActivity, RevenueData } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9002';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 // The mock data is now deprecated as we are using a real API.
 // It's kept here for reference or fallback if needed.
