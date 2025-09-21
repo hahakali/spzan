@@ -1,86 +1,14 @@
 import type { Video, UserActivity, RevenueData } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9002';
+
+// The mock data is now deprecated as we are using a real API.
+// It's kept here for reference or fallback if needed.
 const findImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/800/450`;
 
 const rawVideos: (Omit<Video, 'thumbnail'> & { thumbnailId: string })[] = [
-  {
-    id: '1',
-    title: 'Big Buck Bunny',
-    description: 'A classic open-source animation from the Blender Institute, telling the story of a gentle giant rabbit.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    thumbnailId: 'big-buck-bunny',
-    type: 'free',
-    views: 120543,
-    uploadDate: '2023-10-15',
-    category: 'Entertainment',
-  },
-  {
-    id: '2',
-    title: 'Elephants Dream',
-    description: 'The first open-source movie, a surreal and visually stunning short film about two characters exploring a strange machine.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    thumbnailId: 'elephants-dream',
-    type: 'paid',
-    views: 89765,
-    uploadDate: '2023-10-20',
-    category: 'Entertainment',
-  },
-  {
-    id: '3',
-    title: 'For Bigger Blazes',
-    description: 'A short, fun animation showcasing impressive fire effects and a playful dragon.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    thumbnailId: 'for-bigger-blazes',
-    type: 'free',
-    views: 99876,
-    uploadDate: '2023-11-01',
-    category: 'Entertainment',
-  },
-  {
-    id: '4',
-    title: 'For Bigger Escapes',
-    description: 'Follow an adventurous character as they make a thrilling escape from a precarious situation.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    thumbnailId: 'for-bigger-escapes',
-    type: 'paid',
-    views: 210432,
-    uploadDate: '2023-11-05',
-    category: 'Travel',
-  },
-  {
-    id: '5',
-    title: 'For Bigger Fun',
-    description: 'Experience pure joy and laughter with this delightful and colorful short animation.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    thumbnailId: 'for-bigger-fun',
-    type: 'free',
-    views: 154987,
-    uploadDate: '2023-11-12',
-    category: 'Entertainment',
-  },
-   {
-    id: '6',
-    title: 'For Bigger Joyrides',
-    description: 'A high-speed animated adventure that will get your adrenaline pumping. Buckle up for a wild ride!',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    thumbnailId: 'for-bigger-joyrides',
-    type: 'paid',
-    views: 78654,
-    uploadDate: '2023-11-18',
-    category: 'Sports',
-  },
-  {
-    id: '7',
-    title: 'Sintel',
-    description: 'A dramatic and emotional fantasy short film about a young woman on a quest to find her dragon.',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-    thumbnailId: 'sintel',
-    type: 'free',
-    views: 345987,
-    uploadDate: '2023-12-01',
-    category: 'Entertainment',
-  },
+  // This data is no longer actively used by getVideos()
 ];
 
 export const videos: Video[] = rawVideos.map(v => ({
@@ -107,15 +35,36 @@ export const revenueData: RevenueData[] = [
   { date: 'Jun', 'Revenue (USD)': 5500 },
 ];
 
+// --- New API-based functions ---
+
 export const getVideos = async (): Promise<Video[]> => {
-    // In a real app, this would be a database call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return Promise.resolve(videos);
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/videos`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('Failed to fetch videos from API');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("getVideos error:", error);
+    return []; // Return empty array on error
+  }
 };
 
 export const getVideoById = async (id: string): Promise<Video | undefined> => {
-    return Promise.resolve(videos.find(v => v.id === id));
+   try {
+    const response = await fetch(`${API_BASE_URL}/api/videos/${id}`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch video ${id}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`getVideoById error for id ${id}:`, error);
+    return undefined;
+  }
 }
+
+// --- Analytics data remains the same ---
 
 export const getAnalytics = async () => {
   await new Promise(resolve => setTimeout(resolve, 500));

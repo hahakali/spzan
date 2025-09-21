@@ -1,5 +1,8 @@
+import type { ObjectId } from 'mongodb';
+
 export interface Video {
-  id: string;
+  id: string; // This will be the string representation of _id
+  _id?: ObjectId; // The actual MongoDB ObjectId
   title: string;
   description: string;
   src: string;
