@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Video } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -10,7 +9,12 @@ async function handleApiResponse(response: Response) {
     const errorData = await response.json().catch(() => ({ message: response.statusText }));
     throw new Error(errorData.message || 'An unknown API error occurred');
   }
-  return response.json();
+  // For POST/PUT, we might get a JSON response back. For DELETE, maybe not.
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+  return {}; // Return empty object for non-json responses
 }
 
 export async function addVideoAction(formData: FormData) {
@@ -32,8 +36,7 @@ export async function addVideoAction(formData: FormData) {
 
 export async function updateVideoAction(id: string, formData: FormData) {
    try {
-    // We don't send the file on update for now.
-    // A more complex implementation could handle partial updates.
+    // We don't send the file on update for now, just metadata.
     const data = {
         title: formData.get('title'),
         description: formData.get('description'),
@@ -58,6 +61,8 @@ export async function updateVideoAction(id: string, formData: FormData) {
 
 export async function deleteVideoAction(id: string) {
     try {
+        if (!id) throw new Error('Video ID is missing.');
+
         const response = await fetch(`${API_BASE_URL}/api/videos/${id}`, {
             method: 'DELETE',
         });

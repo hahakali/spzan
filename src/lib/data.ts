@@ -1,20 +1,25 @@
 import type { Video, UserActivity, RevenueData } from './types';
-import { PlaceHolderImages } from './placeholder-images';
 
+// This is a shared variable for both client and server side.
+// On the server (in actions or API routes), process.env.NEXT_PUBLIC_API_BASE_URL might be undefined.
+// In that case, we can assume it's a server-side call and use a relative path.
+// However, for consistency and explicit control, it's better to ensure this is set.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-// The mock data is now deprecated as we are using a real API.
-// It's kept here for reference or fallback if needed.
-const findImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/800/450`;
+async function handleApiResponse(response: Response, context: string) {
+    if (!response.ok) {
+        let errorBody = 'Unknown error';
+        try {
+            errorBody = await response.text();
+        } catch (e) {
+            // ignore
+        }
+        console.error(`${context} Error: Status ${response.status}`, errorBody);
+        throw new Error(`Failed during ${context}. Status: ${response.status}.`);
+    }
+    return response.json();
+}
 
-const rawVideos: (Omit<Video, 'thumbnail'> & { thumbnailId: string })[] = [
-  // This data is no longer actively used by getVideos()
-];
-
-export const videos: Video[] = rawVideos.map(v => ({
-    ...v,
-    thumbnail: findImage(v.thumbnailId),
-}));
 
 export const userActivityData: UserActivity[] = [
   { date: 'May 1', 'Active Users': 2200 },
@@ -35,31 +40,27 @@ export const revenueData: RevenueData[] = [
   { date: 'Jun', 'Revenue (USD)': 5500 },
 ];
 
-// --- New API-based functions ---
+// --- API-based functions ---
 
 export const getVideos = async (): Promise<Video[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/videos`, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error('Failed to fetch videos from API');
-    }
-    const data = await response.json();
-    return data;
+    const response = await fetch(`${API_BASE_URL}/api/videos`, { 
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return await handleApiResponse(response, 'getVideos');
   } catch (error) {
-    console.error("getVideos error:", error);
-    return []; // Return empty array on error
+    console.error("getVideos fetch error:", error);
+    return []; // Return empty array on fetch error
   }
 };
 
 export const getVideoById = async (id: string): Promise<Video | undefined> => {
    try {
     const response = await fetch(`${API_BASE_URL}/api/videos/${id}`, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch video ${id}`);
-    }
-    return response.json();
+    return await handleApiResponse(response, `getVideoById(${id})`);
   } catch (error) {
-    console.error(`getVideoById error for id ${id}:`, error);
+    console.error(`getVideoById fetch error for id ${id}:`, error);
     return undefined;
   }
 }
