@@ -23,9 +23,10 @@ import { addVideoAction, updateVideoAction } from '@/app/admin/videos/actions';
 import { Loader2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi'];
+const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm'];
 
-const formSchema = z.object({
+// Schema for adding a new video (file is required)
+const addFormSchema = z.object({
   title: z.string().min(3, '标题必须至少包含3个字符。'),
   description: z.string().min(10, '描述必须至少包含10个字符。'),
   type: z.enum(['free', 'paid'], { required_error: '请选择内容类型。' }),
@@ -35,12 +36,25 @@ const formSchema = z.object({
     .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `视频文件不能超过100MB。`)
     .refine(
       (files) => ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type),
-      '只支持 MP4, MOV, AVI 格式。'
+      '只支持 MP4, MOV, AVI, WEBM 格式。'
     ),
 });
 
-// For editing, the video file is optional
-const editFormSchema = formSchema.partial({ videoFile: true });
+// Schema for editing an existing video (file is optional)
+const editFormSchema = z.object({
+  title: z.string().min(3, '标题必须至少包含3个字符。'),
+  description: z.string().min(10, '描述必须至少包含10个字符。'),
+  type: z.enum(['free', 'paid'], { required_error: '请选择内容类型。' }),
+  videoFile: z
+    .any()
+    .optional()
+    .refine((files) => files?.length > 0 ? files?.[0]?.size <= MAX_FILE_SIZE : true, `视频文件不能超过100MB。`)
+    .refine(
+      (files) => files?.length > 0 ? ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type) : true,
+      '只支持 MP4, MOV, AVI, WEBM 格式。'
+    ),
+});
+
 
 interface VideoFormProps {
   video: Video | null;
@@ -52,7 +66,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   const isEditMode = !!video;
-  const currentSchema = isEditMode ? editFormSchema : formSchema;
+  const currentSchema = isEditMode ? editFormSchema : addFormSchema;
 
   const form = useForm<z.infer<typeof currentSchema>>({
     resolver: zodResolver(currentSchema),
@@ -72,8 +86,19 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     formData.append('title', values.title);
     formData.append('description', values.description);
     formData.append('type', values.type);
+    
+    // Only append file if it exists (for both add and edit)
     if (values.videoFile && values.videoFile.length > 0) {
       formData.append('videoFile', values.videoFile[0]);
+    } else if (!isEditMode) {
+      // This case should be caught by validation, but as a safeguard:
+      toast({
+        variant: 'destructive',
+        title: '错误',
+        description: `添加新视频时必须提供视频文件。`,
+      });
+      setIsSubmitting(false);
+      return;
     }
 
     try {
@@ -132,22 +157,24 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="videoFile"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{isEditMode ? '替换视频文件 (可选)' : '视频文件'}</FormLabel>
-              <FormControl>
-                <Input type="file" accept={ACCEPTED_VIDEO_TYPES.join(',')} {...fileRef} />
-              </FormControl>
-              <FormDescription>
-                {isEditMode ? '如果您想替换当前视频，请选择一个新文件。' : '选择一个视频文件上传 (MP4, MOV, AVI)。'}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isEditMode && (
+          <FormField
+            control={form.control}
+            name="videoFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>视频文件</FormLabel>
+                <FormControl>
+                  <Input type="file" accept={ACCEPTED_VIDEO_TYPES.join(',')} {...fileRef} />
+                </FormControl>
+                <FormDescription>
+                  选择一个视频文件上传 (MP4, MOV, AVI, WEBM)。最大100MB。
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <FormField
           control={form.control}

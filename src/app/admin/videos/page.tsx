@@ -1,4 +1,4 @@
-import { getVideos } from '@/lib/data';
+import { getVideos } from '@/app/admin/videos/actions';
 import { VideoTable } from './video-table';
 
 export const revalidate = 0; // Disable caching for this page
@@ -13,7 +13,7 @@ export default async function VideosPage({
 }) {
   const query = searchParams?.query || '';
   
-  // Data fetching is now live from the API via getVideos
+  // Data is now fetched directly using the server-side function
   const allVideos = await getVideos();
 
   const filteredVideos = allVideos.filter(video => 

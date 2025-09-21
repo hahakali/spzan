@@ -1,6 +1,6 @@
 'use client';
 
-import { getVideos } from '@/lib/data';
+import { getVideos } from '@/app/admin/videos/actions';
 import {
   Carousel,
   CarouselContent,
