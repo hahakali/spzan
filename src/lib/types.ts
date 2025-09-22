@@ -10,7 +10,6 @@ export interface Video {
   type: 'free' | 'paid';
   views: number;
   uploadDate: string;
-  category?: string;
 }
 
 export interface UserActivity {

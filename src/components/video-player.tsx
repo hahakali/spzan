@@ -175,7 +175,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
             ) : (
                 <Badge variant="destructive">Premium</Badge>
             )}
-            {video.category && <Badge variant="secondary">{video.category}</Badge>}
           </div>
       </div>
 
