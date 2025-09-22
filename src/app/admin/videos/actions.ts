@@ -89,7 +89,7 @@ export async function addVideoAction(formData: FormData) {
       title,
       description,
       type,
-      category: 'N/A',
+      category: 'N/A', // AI classification is removed, defaulting to 'N/A'
       src: fileUrl, 
       thumbnail: `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
       views: 0,
