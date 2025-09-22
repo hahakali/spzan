@@ -22,7 +22,7 @@ import type { Video } from '@/lib/types';
 import { addVideoAction, updateVideoAction } from '@/app/admin/videos/actions';
 import { Loader2 } from 'lucide-react';
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm'];
 
 // Schema for adding a new video (file is required)
@@ -175,7 +175,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
                   <Input type="file" accept={ACCEPTED_VIDEO_TYPES.join(',')} {...fileRef} />
                 </FormControl>
                 <FormDescription>
-                  选择一个视频文件上传 (MP4, MOV, AVI, WEBM)。最大100MB。
+                  选择一个视频文件上传 (MP4, MOV, AVI, WEBM)。最大200MB。
                 </FormDescription>
                 <FormMessage />
               </FormItem>
