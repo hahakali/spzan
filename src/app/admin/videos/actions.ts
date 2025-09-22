@@ -1,4 +1,4 @@
-'use server';
+'erver';
 
 import { revalidatePath } from 'next/cache';
 import { connectToDatabase } from '@/lib/mongodb';
