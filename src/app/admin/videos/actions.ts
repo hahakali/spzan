@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -56,24 +57,22 @@ export async function getVideoById(id: string): Promise<Video | undefined> {
 }
 
 export async function addVideoAction(formData: FormData) {
-  console.log('Action: addVideoAction started.');
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string;
-  const type = formData.get('type') as 'free' | 'paid';
-  const videoFile = formData.get('videoFile') as File | null;
-
-  if (!videoFile || !title || !description || !type) {
-    return { success: false, message: 'Missing required fields.' };
-  }
-
+  console.log('[addVideoAction] - Action started.');
+  
   try {
-    // --- AI Classification (Temporarily Disabled) ---
-    // console.log('Action: Starting AI classification...');
-    // const classification = await classifyVideoContent({ title, description });
-    // console.log('Action: AI classification result:', classification);
-    const classification = { category: 'N/A' }; // Set a default category
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const type = formData.get('type') as 'free' | 'paid';
+    const videoFile = formData.get('videoFile') as File | null;
 
-    // --- File Storage Logic ---
+    if (!videoFile || !title || !description || !type) {
+      console.error('[addVideoAction] - Aborting. Missing required fields.');
+      return { success: false, message: 'Missing required fields.' };
+    }
+    console.log(`[addVideoAction] - Received data: title='${title}', type='${type}'.`);
+
+    // 1. File Storage Logic
+    console.log('[addVideoAction] - Step 1: Preparing to save video file.');
     const videoStoragePath = path.join(process.cwd(), 'public', 'uploads', 'videos');
     await fs.mkdir(videoStoragePath, { recursive: true }); 
     
@@ -81,36 +80,44 @@ export async function addVideoAction(formData: FormData) {
     const filePath = path.join(videoStoragePath, uniqueFilename);
     const fileUrl = `/uploads/videos/${uniqueFilename}`; 
 
+    console.log(`[addVideoAction] - Saving file to: ${filePath}`);
     const buffer = Buffer.from(await videoFile.arrayBuffer());
     await fs.writeFile(filePath, buffer);
-    console.log(`Action: Video saved to filesystem at: ${filePath}`);
+    console.log(`[addVideoAction] - Successfully saved file. Public URL will be: ${fileUrl}`);
     
-    // --- Database Logic ---
+    // 2. Database Logic
+    console.log('[addVideoAction] - Step 2: Preparing to write metadata to database.');
     const newVideo: Omit<Video, 'id' | '_id'> = {
       title,
       description,
       type,
-      category: classification.category,
+      category: 'N/A', // AI classification is disabled
       src: fileUrl, 
       thumbnail: `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
       views: 0,
       uploadDate: new Date().toISOString(),
     };
 
+    console.log('[addVideoAction] - Connecting to database...');
     const { db } = await connectToDatabase();
+    console.log('[addVideoAction] - Database connected. Inserting new video document...');
     const result = await db.collection('videos').insertOne(newVideo);
-    console.log('Action: Video metadata inserted into DB with ID:', result.insertedId);
+    console.log('[addVideoAction] - Successfully inserted video into DB with ID:', result.insertedId);
 
+    // 3. Revalidation
+    console.log('[addVideoAction] - Step 3: Revalidating paths.');
     revalidatePath('/admin/videos');
     revalidatePath('/');
-    return { success: true, message: `Video added successfully. AI classification is disabled.` };
+    console.log('[addVideoAction] - Action finished successfully.');
+    return { success: true, message: `Video added successfully.` };
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('addVideoAction failed:', errorMessage);
+    console.error('[addVideoAction] - An error occurred:', error);
     return { success: false, message: `Failed to add video: ${errorMessage}` };
   }
 }
+
 
 export async function updateVideoAction(id: string, formData: FormData) {
   console.log(`Action: updateVideoAction started for ID: ${id}.`);
