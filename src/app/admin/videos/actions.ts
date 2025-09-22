@@ -90,7 +90,7 @@ export async function addVideoAction(formData: FormData) {
       description,
       type,
       src: fileUrl, 
-      thumbnail: `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
+      thumbnail: fileUrl, // Use the video's own URL as the thumbnail.
       views: 0,
       uploadDate: new Date().toISOString(),
     };
