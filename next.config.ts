@@ -1,9 +1,10 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  serverActions: {
-    bodySizeLimit: '200mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '500mb',
+    },
   },
   typescript: {
     ignoreBuildErrors: true,
