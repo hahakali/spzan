@@ -33,7 +33,6 @@ const addFormSchema = z.object({
   videoFile: z
     .any()
     .refine((files) => files?.length == 1, '请选择一个视频文件。')
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `视频文件不能超过100MB。`)
     .refine(
       (files) => ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type),
       '只支持 MP4, MOV, AVI, WEBM 格式。'
@@ -48,7 +47,6 @@ const editFormSchema = z.object({
   videoFile: z
     .any()
     .optional()
-    .refine((files) => files?.length > 0 ? files?.[0]?.size <= MAX_FILE_SIZE : true, `视频文件不能超过100MB。`)
     .refine(
       (files) => files?.length > 0 ? ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type) : true,
       '只支持 MP4, MOV, AVI, WEBM 格式。'
@@ -89,6 +87,15 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     
     // Only append file if it exists (for both add and edit)
     if (values.videoFile && values.videoFile.length > 0) {
+      if (values.videoFile[0].size > MAX_FILE_SIZE) {
+         toast({
+            variant: 'destructive',
+            title: '错误',
+            description: `文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB。`,
+          });
+          setIsSubmitting(false);
+          return;
+      }
       formData.append('videoFile', values.videoFile[0]);
     } else if (!isEditMode) {
       // This case should be caught by validation, but as a safeguard:
