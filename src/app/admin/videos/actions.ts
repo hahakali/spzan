@@ -1,9 +1,7 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { connectToDatabase } from '@/lib/mongodb';
-import { classifyVideoContent } from '@/ai/flows/classify-video-content';
 import type { Video } from '@/lib/types';
 import path from 'path';
 import fs from 'fs/promises';
@@ -91,7 +89,7 @@ export async function addVideoAction(formData: FormData) {
       title,
       description,
       type,
-      category: 'N/A', // AI classification is disabled
+      category: 'N/A',
       src: fileUrl, 
       thumbnail: `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
       views: 0,
