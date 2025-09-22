@@ -126,7 +126,6 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
               <TableHead className="w-[80px]">缩略图</TableHead>
               <TableHead>标题</TableHead>
               <TableHead>类型</TableHead>
-              <TableHead>分类</TableHead>
               <TableHead>观看次数</TableHead>
               <TableHead>上传日期</TableHead>
               <TableHead className="w-[50px] text-right">操作</TableHead>
@@ -151,7 +150,6 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
                     {video.type === 'paid' ? '付费' : '免费'}
                   </Badge>
                 </TableCell>
-                <TableCell>{video.category || 'N/A'}</TableCell>
                 <TableCell>{video.views.toLocaleString()}</TableCell>
                 <TableCell>{video.uploadDate}</TableCell>
                 <TableCell className="text-right">
