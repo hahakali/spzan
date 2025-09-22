@@ -67,10 +67,11 @@ export async function addVideoAction(formData: FormData) {
   }
 
   try {
-    // --- AI Classification ---
-    console.log('Action: Starting AI classification...');
-    const classification = await classifyVideoContent({ title, description });
-    console.log('Action: AI classification result:', classification);
+    // --- AI Classification (Temporarily Disabled) ---
+    // console.log('Action: Starting AI classification...');
+    // const classification = await classifyVideoContent({ title, description });
+    // console.log('Action: AI classification result:', classification);
+    const classification = { category: 'N/A' }; // Set a default category
 
     // --- File Storage Logic ---
     const videoStoragePath = path.join(process.cwd(), 'public', 'uploads', 'videos');
@@ -102,7 +103,7 @@ export async function addVideoAction(formData: FormData) {
 
     revalidatePath('/admin/videos');
     revalidatePath('/');
-    return { success: true, message: `Video added successfully. AI classified it as '${classification.category}'.` };
+    return { success: true, message: `Video added successfully. AI classification is disabled.` };
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
