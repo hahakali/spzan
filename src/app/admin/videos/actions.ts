@@ -89,8 +89,8 @@ export async function addVideoAction(formData: FormData) {
       title,
       description,
       type,
-      src: fileUrl, 
-      thumbnail: fileUrl,
+      src: fileUrl, // Use the actual file URL
+      thumbnail: fileUrl, // Use the actual file URL for the poster
       views: 0,
       uploadDate: new Date().toISOString(),
     };

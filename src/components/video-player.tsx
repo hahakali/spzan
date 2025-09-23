@@ -42,7 +42,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
   const [isBuffering, setIsBuffering] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mute/unmute based on state
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -50,7 +49,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isMuted]);
 
-  // Play/pause based on props from parent
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -62,7 +60,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isPlaying, isActive, isPaidLocked]);
 
-  // Reset video time when it becomes inactive
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!isActive && videoElement) {
@@ -84,7 +81,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     };
     const handleDurationChange = () => setDuration(videoElement.duration);
     const handleEnded = () => {
-      onPlayToggle(''); // Signal that no video is playing
+      onPlayToggle(''); 
       onVideoEnd();
     };
     const handleWaiting = () => {
@@ -108,7 +105,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
   }, [onVideoEnd, isPlaying, isActive, onPlayToggle]);
 
   const handleTogglePlay = (e?: React.MouseEvent) => {
-    e?.stopPropagation(); // Prevent main div click from firing if called from button
+    e?.stopPropagation(); 
     if (isPaidLocked) {
         setShowUnlockDialog(true);
         return;
@@ -146,7 +143,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     e.stopPropagation();
     setIsPaidLocked(false);
     setShowUnlockDialog(false);
-    // Directly trigger play after unlocking
     onPlayToggle(video.id);
   }
 
@@ -172,7 +168,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         </div>
       )}
 
-      {/* Play/Pause Icon Overlay */}
       {!isPlaying && !isPaidLocked && showControls && isActive && (
          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <Play className="h-20 w-20 text-white/50" fill="white" />
@@ -180,7 +175,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
       )}
 
 
-      {/* Video Info Overlay */}
       <div className={cn(
           "absolute bottom-24 left-4 text-white p-4 rounded-lg bg-black/20 max-w-md transition-opacity duration-300 pointer-events-none",
            showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
@@ -207,7 +201,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         </div>
       )}
 
-      {/* Custom Controls */}
       <div
         className={cn(
           'absolute bottom-0 left-0 right-0 z-20 p-4 transition-opacity duration-300',

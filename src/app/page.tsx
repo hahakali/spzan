@@ -25,7 +25,6 @@ export default function Home() {
       try {
         const videoData = await getVideos();
         setVideos(videoData);
-        // If videos are loaded, set the first video to be the playing one
         if (videoData.length > 0) {
           setPlayingVideoId(videoData[0].id);
         }
@@ -45,13 +44,12 @@ export default function Home() {
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap();
       setCurrent(selectedIndex);
-      // Automatically play the video that is scrolled into view
       if (videos[selectedIndex]) {
         setPlayingVideoId(videos[selectedIndex].id);
       }
     };
     api.on('select', handleSelect);
-    handleSelect(); // Set initial value
+    handleSelect(); 
     return () => {
       api.off('select', handleSelect);
     };
