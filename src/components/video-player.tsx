@@ -8,8 +8,7 @@ import {
   Play,
   Pause,
   Volume2,
-  FastForward,
-  Rewind,
+  VolumeX,
   Lock,
   Loader2,
 } from 'lucide-react';
@@ -28,21 +27,22 @@ interface VideoPlayerProps {
   video: Video;
   isActive: boolean;
   isPlaying: boolean;
-  onPlay: (videoId: string) => void;
+  onPlayToggle: (videoId: string) => void;
   onVideoEnd: () => void;
 }
 
-export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: VideoPlayerProps) {
+export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoEnd }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
+  const [isMuted, setIsMuted] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [isPaidLocked, setIsPaidLocked] = useState(video.type === 'paid');
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Mute/unmute based on state
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -50,6 +50,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
     }
   }, [isMuted]);
 
+  // Play/pause based on props from parent
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -57,13 +58,18 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
         videoElement.play().catch(e => console.log("Play interrupted", e));
       } else {
         videoElement.pause();
-        // Only reset time if it's becoming inactive
-        if (!isActive) {
-          videoElement.currentTime = 0; 
-        }
       }
     }
   }, [isPlaying, isActive, isPaidLocked]);
+
+  // Reset video time when it becomes inactive
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!isActive && videoElement) {
+        videoElement.currentTime = 0;
+        setProgress(0);
+    }
+  }, [isActive]);
 
 
   useEffect(() => {
@@ -71,19 +77,21 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
     if (!videoElement) return;
 
     const handleTimeUpdate = () => {
-      setProgress(videoElement.currentTime);
-      if (videoElement.currentTime > 0 && isBuffering) {
+      if(videoElement.currentTime > 0){
+        setProgress(videoElement.currentTime);
         setIsBuffering(false);
       }
     };
     const handleDurationChange = () => setDuration(videoElement.duration);
     const handleEnded = () => {
-      onPlay(''); // Signal that no video is playing
+      onPlayToggle(''); // Signal that no video is playing
       onVideoEnd();
     };
-    const handleWaiting = () => setIsBuffering(true);
+    const handleWaiting = () => {
+      if(isPlaying && isActive) setIsBuffering(true);
+    }
     const handlePlaying = () => setIsBuffering(false);
-
+    
     videoElement.addEventListener('timeupdate', handleTimeUpdate);
     videoElement.addEventListener('durationchange', handleDurationChange);
     videoElement.addEventListener('ended', handleEnded);
@@ -97,36 +105,16 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       videoElement.removeEventListener('waiting', handleWaiting);
       videoElement.removeEventListener('playing', handlePlaying);
     };
-  }, [onVideoEnd, isBuffering, onPlay]);
+  }, [onVideoEnd, isPlaying, isActive, onPlayToggle]);
 
-  const togglePlay = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent main div click from firing
+  const handleTogglePlay = (e?: React.MouseEvent) => {
+    e?.stopPropagation(); // Prevent main div click from firing if called from button
     if (isPaidLocked) {
         setShowUnlockDialog(true);
         return;
     }
-    if (isPlaying) {
-      onPlay(''); // Pause
-    } else {
-      onPlay(video.id); // Play
-    }
+    onPlayToggle(video.id);
   };
-  
-  const mainClickTogglePlay = () => {
-    // Only toggle play if controls are visible to avoid accidental clicks
-    if (showControls) {
-      if (isPaidLocked) {
-        setShowUnlockDialog(true);
-        return;
-      }
-      if (isPlaying) {
-        onPlay(''); // Pause
-      } else {
-        onPlay(video.id); // Play
-      }
-    }
-  }
-
 
   const handleSeek = (value: number[]) => {
     if (videoRef.current) {
@@ -134,14 +122,6 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       setProgress(value[0]);
     }
   };
-
-  const handleSeekRelative = (amount: number) => {
-    if (videoRef.current) {
-      const newTime = Math.max(0, Math.min(duration, videoRef.current.currentTime + amount));
-      videoRef.current.currentTime = newTime;
-      setProgress(newTime);
-    }
-  }
 
   const formatTime = (time: number) => {
     if (isNaN(time) || time === 0) return '0:00';
@@ -166,22 +146,24 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
     e.stopPropagation();
     setIsPaidLocked(false);
     setShowUnlockDialog(false);
-    onPlay(video.id);
+    // Directly trigger play after unlocking
+    onPlayToggle(video.id);
   }
 
   return (
     <div
       className="relative h-full w-full bg-black flex items-center justify-center overflow-hidden"
       onPointerMove={handlePointerMove}
-      onClick={mainClickTogglePlay}
+      onClick={() => handleTogglePlay()}
     >
       <video
         ref={videoRef}
         className="h-full w-full object-contain"
-        src={isPaidLocked ? '' : video.src}
+        src={video.src}
         poster={video.thumbnail}
         playsInline
         loop={false}
+        preload="auto"
       />
 
       {isBuffering && isActive && !isPaidLocked && (
@@ -189,6 +171,14 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <Loader2 className="h-12 w-12 animate-spin text-white" />
         </div>
       )}
+
+      {/* Play/Pause Icon Overlay */}
+      {!isPlaying && !isPaidLocked && showControls && isActive && (
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <Play className="h-20 w-20 text-white/50" fill="white" />
+        </div>
+      )}
+
 
       {/* Video Info Overlay */}
       <div className={cn(
@@ -207,7 +197,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       </div>
 
       {isPaidLocked && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm z-10" onClick={e => e.stopPropagation()}>
           <Lock className="h-16 w-16 text-primary mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">付费内容</h3>
           <p className="text-neutral-300 mb-6">解锁此视频即可观看。</p>
@@ -236,31 +226,23 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           />
           <div className="flex items-center justify-between text-white mt-2">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={togglePlay} className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="icon" onClick={(e) => handleTogglePlay(e)} className="text-white hover:bg-white/10">
                 {isPlaying && isActive && !isPaidLocked ? <Pause /> : <Play />}
               </Button>
-              <div className='hidden sm:flex items-center gap-2'>
-                <Button variant="ghost" size="icon" onClick={() => handleSeekRelative(-10)} className="text-white hover:bg-white/10">
-                    <Rewind />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleSeekRelative(10)} className="text-white hover:bg-white/10">
-                    <FastForward />
-                </Button>
-              </div>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs font-mono">
                 {formatTime(progress)} / {formatTime(duration)}
               </span>
               <Button variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)} className="text-white hover:bg-white/10">
-                <Volume2 />
+                {isMuted ? <VolumeX /> : <Volume2 />}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-       <Dialog open={showUnlockDialog} onOpenChange={setShowUnlockDialog}>
+       <Dialog open={showUnlockDialog} onOpenChange={(isOpen) => { setShowUnlockDialog(isOpen); }}>
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>解锁付费内容</DialogTitle>

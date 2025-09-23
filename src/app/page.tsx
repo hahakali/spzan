@@ -25,6 +25,10 @@ export default function Home() {
       try {
         const videoData = await getVideos();
         setVideos(videoData);
+        // If videos are loaded, set the first video to be the playing one
+        if (videoData.length > 0) {
+          setPlayingVideoId(videoData[0].id);
+        }
       } catch (error) {
         console.error("Failed to fetch videos:", error);
       } finally {
@@ -39,14 +43,19 @@ export default function Home() {
       return;
     }
     const handleSelect = () => {
-      setCurrent(api.selectedScrollSnap());
+      const selectedIndex = api.selectedScrollSnap();
+      setCurrent(selectedIndex);
+      // Automatically play the video that is scrolled into view
+      if (videos[selectedIndex]) {
+        setPlayingVideoId(videos[selectedIndex].id);
+      }
     };
     api.on('select', handleSelect);
     handleSelect(); // Set initial value
     return () => {
       api.off('select', handleSelect);
     };
-  }, [api]);
+  }, [api, videos]);
 
   const handleVideoEnd = () => {
     if (api && api.canScrollNext()) {
@@ -54,8 +63,8 @@ export default function Home() {
     }
   };
 
-  const handlePlay = useCallback((videoId: string) => {
-    setPlayingVideoId(videoId);
+  const handlePlayToggle = useCallback((videoId: string) => {
+    setPlayingVideoId(currentId => currentId === videoId ? null : videoId);
   }, []);
 
   if (loading) {
@@ -86,7 +95,7 @@ export default function Home() {
                 video={video}
                 isActive={index === current}
                 isPlaying={playingVideoId === video.id}
-                onPlay={handlePlay}
+                onPlayToggle={handlePlayToggle}
                 onVideoEnd={handleVideoEnd}
               />
             </CarouselItem>
