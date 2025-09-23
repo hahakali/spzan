@@ -8,6 +8,17 @@ import path from 'path';
 import fs from 'fs/promises';
 import { ObjectId } from 'mongodb';
 
+// Helper function to ensure directory exists
+async function ensureDirectoryExists(directoryPath: string) {
+  try {
+    await fs.mkdir(directoryPath, { recursive: true });
+  } catch (error: any) {
+    if (error.code !== 'EEXIST') {
+      throw error;
+    }
+  }
+}
+
 export async function getVideos(): Promise<Video[]> {
   try {
     const { db } = await connectToDatabase();
@@ -17,11 +28,10 @@ export async function getVideos(): Promise<Video[]> {
       .sort({ uploadDate: -1 })
       .toArray();
 
-    // The _id from mongodb needs to be converted to a string for client-side use
     const formattedVideos = videos.map(video => ({
         ...video,
         id: video._id.toString(),
-        _id: undefined, // Remove the ObjectId from the client-side object
+        _id: undefined, 
     })) as unknown as Video[];
     
     return formattedVideos;
@@ -56,7 +66,6 @@ export async function getVideoById(id: string): Promise<Video | undefined> {
 }
 
 export async function addVideoAction(formData: FormData) {
-  
   try {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
@@ -68,11 +77,13 @@ export async function addVideoAction(formData: FormData) {
     }
 
     // 1. File Storage Logic
-    const videoStoragePath = path.join(process.cwd(), 'uploads', 'videos');
-    await fs.mkdir(videoStoragePath, { recursive: true }); 
+    // CORRECTED: Save files to the `public` directory
+    const videoStoragePath = path.join(process.cwd(), 'public', 'uploads', 'videos');
+    await ensureDirectoryExists(videoStoragePath);
     
     const uniqueFilename = `${Date.now()}-${videoFile.name}`;
     const filePath = path.join(videoStoragePath, uniqueFilename);
+    // CORRECTED: The URL will be directly accessible
     const fileUrl = `/uploads/videos/${uniqueFilename}`; 
 
     const buffer = Buffer.from(await videoFile.arrayBuffer());
@@ -84,7 +95,7 @@ export async function addVideoAction(formData: FormData) {
       description,
       type,
       src: fileUrl,
-      thumbnail: fileUrl,
+      thumbnail: fileUrl, // Use the video itself for thumbnail generation on client
       views: 0,
       uploadDate: new Date().toISOString(),
     };
@@ -94,7 +105,7 @@ export async function addVideoAction(formData: FormData) {
 
     // 3. Revalidation
     revalidatePath('/admin/videos');
-    revalidatePath('/'); // Revalidate home page to show new video
+    revalidatePath('/'); 
     return { success: true, message: `Video added successfully.` };
 
   } catch (error) {
@@ -102,7 +113,6 @@ export async function addVideoAction(formData: FormData) {
     return { success: false, message: `Failed to add video: ${errorMessage}` };
   }
 }
-
 
 export async function updateVideoAction(id: string, formData: FormData) {
    try {
@@ -135,7 +145,7 @@ export async function updateVideoAction(id: string, formData: FormData) {
     }
 
     revalidatePath('/admin/videos');
-    revalidatePath('/'); // Also revalidate home page
+    revalidatePath('/');
     return { success: true, message: 'Video updated successfully.' };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -158,12 +168,16 @@ export async function deleteVideoAction(id: string) {
 
         // 1. Delete the file from the filesystem
         if (video.src) {
-            const filePath = path.join(process.cwd(), video.src.substring(1)); // Remove leading slash
+            // CORRECTED: File path should point to the `public` directory
+            const filePath = path.join(process.cwd(), 'public', video.src);
             try {
                 await fs.unlink(filePath);
             } catch (fileError: any) {
+                // It's okay if the file doesn't exist, just log it.
                 if (fileError.code !== 'ENOENT') {
                    console.error(`Action: Could not delete file ${filePath}:`, fileError);
+                } else {
+                   console.warn(`Action: Video file not found at ${filePath}, but proceeding to delete database record.`);
                 }
             }
         }
