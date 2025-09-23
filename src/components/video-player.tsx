@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Video } from '@/lib/types';
@@ -164,7 +165,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         ref={videoRef}
         className="h-full w-full object-contain"
         src={video.src}
-        poster={video.src} // Use video src for poster to get first frame
+        poster={video.src}
         playsInline
         loop={false}
         preload="auto"
