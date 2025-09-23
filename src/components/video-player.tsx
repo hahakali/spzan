@@ -156,7 +156,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
         src={isPaidLocked ? '' : video.src}
         playsInline
         loop={false}
-        poster={video.src}
+        poster={isPaidLocked ? video.thumbnail : video.src}
       />
 
       {isBuffering && isActive && (
