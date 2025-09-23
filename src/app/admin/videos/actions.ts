@@ -68,7 +68,7 @@ export async function addVideoAction(formData: FormData) {
     }
 
     // 1. File Storage Logic
-    const videoStoragePath = path.join(process.cwd(), 'public', 'uploads', 'videos');
+    const videoStoragePath = path.join(process.cwd(), 'uploads', 'videos');
     await fs.mkdir(videoStoragePath, { recursive: true }); 
     
     const uniqueFilename = `${Date.now()}-${videoFile.name}`;
@@ -79,13 +79,12 @@ export async function addVideoAction(formData: FormData) {
     await fs.writeFile(filePath, buffer);
     
     // 2. Database Logic
-    // THIS IS THE CRITICAL FIX: Use the actual fileUrl for both src and thumbnail
     const newVideo: Omit<Video, 'id'> = {
       title,
       description,
       type,
       src: fileUrl,
-      thumbnail: fileUrl, // Use the video itself as the thumbnail source
+      thumbnail: fileUrl,
       views: 0,
       uploadDate: new Date().toISOString(),
     };
@@ -159,7 +158,7 @@ export async function deleteVideoAction(id: string) {
 
         // 1. Delete the file from the filesystem
         if (video.src) {
-            const filePath = path.join(process.cwd(), 'public', video.src);
+            const filePath = path.join(process.cwd(), video.src.substring(1)); // Remove leading slash
             try {
                 await fs.unlink(filePath);
             } catch (fileError: any) {
