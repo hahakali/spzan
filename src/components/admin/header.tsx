@@ -12,8 +12,15 @@ import {
 } from '../ui/dropdown-menu';
 import { CircleUser, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { logout } from '@/app/login/actions';
+
 
 export function Header() {
+
+  const handleLogout = async () => {
+    await logout();
+  }
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       <div className="md:hidden">
@@ -37,10 +44,7 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </DropdownMenuItem>
