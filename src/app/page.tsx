@@ -1,4 +1,3 @@
-
 'use client';
 
 import { getVideos } from '@/app/admin/videos/actions';
