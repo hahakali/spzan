@@ -38,10 +38,10 @@ const addFormSchema = formSchemaBase.extend({
     .any()
     .refine((files) => files?.length == 1, '请选择一个视频文件。')
     .refine(
-      (files) => ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type),
+      (files) => files?.[0] && ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type),
       '只支持 MP4, MOV, AVI, WEBM 格式。'
     )
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `文件大小不能超过 500MB。`),
+    .refine((files) => files?.[0] && files?.[0]?.size <= MAX_FILE_SIZE, `文件大小不能超过 500MB。`),
 });
 
 // Schema for editing an existing video (file is optional)
