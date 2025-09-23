@@ -1,8 +1,6 @@
-
 'use server';
 
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 export async function login(formData: FormData) {
   const password = formData.get('password');
@@ -27,5 +25,4 @@ export async function login(formData: FormData) {
 export async function logout() {
     const cookieStore = cookies();
     cookieStore.delete('flowstream-auth');
-    redirect('/login');
 }

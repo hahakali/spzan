@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -28,6 +27,7 @@ export default function LoginPage() {
 
       if (result.success) {
         router.push('/admin');
+        router.refresh(); // Force a refresh to apply middleware redirection
       } else {
         setError(result.error || 'An unknown error occurred.');
       }

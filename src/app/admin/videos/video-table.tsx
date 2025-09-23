@@ -141,7 +141,6 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
                     width={80}
                     height={45}
                     className="rounded-md object-cover"
-                    data-ai-hint="video thumbnail"
                   />
                 </TableCell>
                 <TableCell className="font-medium">{video.title}</TableCell>
@@ -151,7 +150,7 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>{video.views.toLocaleString()}</TableCell>
-                <TableCell>{video.uploadDate}</TableCell>
+                <TableCell>{new Date(video.uploadDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
                    <AlertDialog>
                       <DropdownMenu>

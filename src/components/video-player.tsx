@@ -36,7 +36,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
   const [showControls, setShowControls] = useState(true);
   const [isPaidLocked, setIsPaidLocked] = useState(video.type === 'paid');
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
@@ -57,6 +57,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
         videoElement.play().catch(e => console.log("Play interrupted", e));
       } else {
         videoElement.pause();
+        videoElement.currentTime = 0; // Reset video on pause/inactive
       }
     }
   }, [isPlaying, isActive]);
@@ -95,7 +96,8 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
     };
   }, [onVideoEnd, isBuffering, onPlay]);
 
-  const togglePlay = () => {
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent main div click from firing
     if (isPaidLocked) {
         setShowUnlockDialog(true);
         return;
@@ -106,6 +108,22 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       onPlay(video.id); // Play
     }
   };
+  
+  const mainClickTogglePlay = () => {
+    // Only toggle play if controls are visible to avoid accidental clicks
+    if (showControls) {
+      if (isPaidLocked) {
+        setShowUnlockDialog(true);
+        return;
+      }
+      if (isPlaying) {
+        onPlay(''); // Pause
+      } else {
+        onPlay(video.id); // Play
+      }
+    }
+  }
+
 
   const handleSeek = (value: number[]) => {
     if (videoRef.current) {
@@ -123,6 +141,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
   }
 
   const formatTime = (time: number) => {
+    if (isNaN(time) || time === 0) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -134,11 +153,14 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       clearTimeout(controlsTimeoutRef.current);
     }
     controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
+      if(isPlaying){
+        setShowControls(false);
+      }
     }, 3000);
   };
 
-  const handleUnlock = () => {
+  const handleUnlock = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsPaidLocked(false);
     setShowUnlockDialog(false);
     onPlay(video.id);
@@ -148,25 +170,28 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
     <div
       className="relative h-full w-full bg-black flex items-center justify-center overflow-hidden"
       onPointerMove={handlePointerMove}
-      onClick={togglePlay}
+      onClick={mainClickTogglePlay}
     >
       <video
         ref={videoRef}
         className="h-full w-full object-contain"
-        src={isPaidLocked ? '' : video.src}
+        src={isPaidLocked ? undefined : video.src}
         playsInline
         loop={false}
-        poster={isPaidLocked ? video.thumbnail : video.src}
+        poster={video.thumbnail} // Use thumbnail (which is the video src) as poster
       />
 
       {isBuffering && isActive && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
           <Loader2 className="h-12 w-12 animate-spin text-white" />
         </div>
       )}
 
       {/* Video Info Overlay */}
-      <div className="absolute bottom-24 left-4 text-white p-4 rounded-lg bg-black/20 max-w-md">
+      <div className={cn(
+          "absolute bottom-24 left-4 text-white p-4 rounded-lg bg-black/20 max-w-md transition-opacity duration-300 pointer-events-none",
+           showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
+        )}>
           <h2 className="text-2xl font-bold font-headline">{video.title}</h2>
           <p className="text-sm mt-2 text-neutral-300">{video.description}</p>
           <div className="flex gap-2 mt-3">
@@ -200,7 +225,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
         <div className="bg-black/40 backdrop-blur-md rounded-lg p-3">
           <Slider
             value={[progress]}
-            max={duration}
+            max={duration || 1}
             step={1}
             onValueChange={handleSeek}
             disabled={isPaidLocked}
@@ -209,7 +234,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <div className="flex items-center justify-between text-white mt-2">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" onClick={togglePlay} className="text-white hover:bg-white/10">
-                {isPlaying ? <Pause /> : <Play />}
+                {isPlaying && isActive ? <Pause /> : <Play />}
               </Button>
               <div className='hidden sm:flex items-center gap-2'>
                 <Button variant="ghost" size="icon" onClick={() => handleSeekRelative(-10)} className="text-white hover:bg-white/10">
@@ -224,14 +249,16 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
               <span className="text-xs font-mono">
                 {formatTime(progress)} / {formatTime(duration)}
               </span>
-              <Volume2 className="text-white" />
+              <Button variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)} className="text-white hover:bg-white/10">
+                <Volume2 />
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
        <Dialog open={showUnlockDialog} onOpenChange={setShowUnlockDialog}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>解锁付费内容</DialogTitle>
             <DialogDescription>
@@ -243,7 +270,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
             <p className='text-sm text-muted-foreground mt-1'>价格: $2.99</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUnlockDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={(e) => {e.stopPropagation(); setShowUnlockDialog(false)}}>取消</Button>
             <Button onClick={handleUnlock}><Lock className='mr-2 h-4 w-4' /> 付款并观看</Button>
           </DialogFooter>
         </DialogContent>

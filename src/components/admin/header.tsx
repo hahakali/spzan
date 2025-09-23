@@ -13,12 +13,16 @@ import {
 import { CircleUser, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { logout } from '@/app/login/actions';
+import { useRouter } from 'next/navigation';
 
 
 export function Header() {
+  const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
+    router.push('/login');
+    router.refresh();
   }
 
   return (
