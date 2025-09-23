@@ -53,14 +53,17 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
-      if (isPlaying && isActive) {
+      if (isPlaying && isActive && !isPaidLocked) {
         videoElement.play().catch(e => console.log("Play interrupted", e));
       } else {
         videoElement.pause();
-        videoElement.currentTime = 0; // Reset video on pause/inactive
+        // Only reset time if it's becoming inactive
+        if (!isActive) {
+          videoElement.currentTime = 0; 
+        }
       }
     }
-  }, [isPlaying, isActive]);
+  }, [isPlaying, isActive, isPaidLocked]);
 
 
   useEffect(() => {
@@ -175,13 +178,13 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
       <video
         ref={videoRef}
         className="h-full w-full object-contain"
-        src={isPaidLocked ? undefined : video.src}
+        src={isPaidLocked ? '' : video.src}
+        poster={video.thumbnail}
         playsInline
         loop={false}
-        poster={video.src}
       />
 
-      {isBuffering && isActive && (
+      {isBuffering && isActive && !isPaidLocked && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
           <Loader2 className="h-12 w-12 animate-spin text-white" />
         </div>
@@ -234,7 +237,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <div className="flex items-center justify-between text-white mt-2">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" onClick={togglePlay} className="text-white hover:bg-white/10">
-                {isPlaying && isActive ? <Pause /> : <Play />}
+                {isPlaying && isActive && !isPaidLocked ? <Pause /> : <Play />}
               </Button>
               <div className='hidden sm:flex items-center gap-2'>
                 <Button variant="ghost" size="icon" onClick={() => handleSeekRelative(-10)} className="text-white hover:bg-white/10">
@@ -262,7 +265,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <DialogHeader>
             <DialogTitle>解锁付费内容</DialogTitle>
             <DialogDescription>
-              此为一次性购买，付款后即可永久观看该视频。
+             此为一次性购买，付款后即可永久观看该视频。
             </DialogDescription>
           </DialogHeader>
           <div className='my-4 p-4 border rounded-lg'>

@@ -90,7 +90,7 @@ export async function addVideoAction(formData: FormData) {
       description,
       type,
       src: fileUrl, 
-      thumbnail: fileUrl, // Use the video URL as the thumbnail
+      thumbnail: fileUrl,
       views: 0,
       uploadDate: new Date().toISOString(),
     };
