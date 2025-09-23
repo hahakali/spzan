@@ -158,13 +158,13 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     <div
       className="relative h-full w-full bg-black flex items-center justify-center overflow-hidden"
       onPointerMove={handlePointerMove}
-      onClick={() => handleTogglePlay()}
+      onClick={handleTogglePlay}
     >
       <video
         ref={videoRef}
         className="h-full w-full object-contain"
         src={video.src}
-        poster={video.thumbnail} // Use thumbnail (which is now same as src) for the poster
+        poster={video.src}
         playsInline
         loop={false}
         preload="auto"
@@ -176,8 +176,10 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         </div>
       )}
 
-      {(!isPlaying || !isActive) && !isPaidLocked && showControls && (
-         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+      {(!isPlaying || !isActive) && !isPaidLocked && (
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300"
+            style={{ opacity: !isPlaying && isActive ? 1 : 0 }}
+         >
             <Play className="h-20 w-20 text-white/50" fill="white" />
         </div>
       )}

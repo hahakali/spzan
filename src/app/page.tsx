@@ -69,7 +69,7 @@ export default function Home() {
   }, [api]);
 
   const handlePlayToggle = useCallback((videoId: string) => {
-    setPlayingVideoId(currentId => currentId === videoId ? null : videoId);
+    setPlayingVideoId(currentId => (currentId === videoId ? null : videoId));
   }, []);
 
   if (loading) {
