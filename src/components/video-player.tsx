@@ -178,7 +178,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
         src={isPaidLocked ? undefined : video.src}
         playsInline
         loop={false}
-        poster={video.thumbnail} // Use thumbnail (which is the video src) as poster
+        poster={video.src}
       />
 
       {isBuffering && isActive && (
@@ -196,9 +196,9 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <p className="text-sm mt-2 text-neutral-300">{video.description}</p>
           <div className="flex gap-2 mt-3">
             {video.type === 'free' ? (
-                <Badge variant="outline" className="border-accent text-accent">Free to Watch</Badge>
+                <Badge variant="outline" className="border-accent text-accent">免费观看</Badge>
             ) : (
-                <Badge variant="destructive">Premium</Badge>
+                <Badge variant="destructive">付费内容</Badge>
             )}
           </div>
       </div>
@@ -262,7 +262,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlay, onVideoEnd }: 
           <DialogHeader>
             <DialogTitle>解锁付费内容</DialogTitle>
             <DialogDescription>
-              要观看此视频，请完成付款。这是该视频的一次性购买。
+              此为一次性购买，付款后即可永久观看该视频。
             </DialogDescription>
           </DialogHeader>
           <div className='my-4 p-4 border rounded-lg'>

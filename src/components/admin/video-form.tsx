@@ -22,14 +22,17 @@ import type { Video } from '@/lib/types';
 import { addVideoAction, updateVideoAction } from '@/app/admin/videos/actions';
 import { Loader2 } from 'lucide-react';
 
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm'];
 
-// Schema for adding a new video (file is required)
-const addFormSchema = z.object({
+const formSchemaBase = z.object({
   title: z.string().min(3, '标题必须至少包含3个字符。'),
   description: z.string().min(10, '描述必须至少包含10个字符。'),
   type: z.enum(['free', 'paid'], { required_error: '请选择内容类型。' }),
+});
+
+// Schema for adding a new video (file is required)
+const addFormSchema = formSchemaBase.extend({
   videoFile: z
     .any()
     .refine((files) => files?.length == 1, '请选择一个视频文件。')
@@ -40,10 +43,7 @@ const addFormSchema = z.object({
 });
 
 // Schema for editing an existing video (file is optional)
-const editFormSchema = z.object({
-  title: z.string().min(3, '标题必须至少包含3个字符。'),
-  description: z.string().min(10, '描述必须至少包含10个字符。'),
-  type: z.enum(['free', 'paid'], { required_error: '请选择内容类型。' }),
+const editFormSchema = formSchemaBase.extend({
   videoFile: z
     .any()
     .optional()
@@ -175,7 +175,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
                   <Input type="file" accept={ACCEPTED_VIDEO_TYPES.join(',')} {...fileRef} />
                 </FormControl>
                 <FormDescription>
-                  选择一个视频文件上传 (MP4, MOV, AVI, WEBM)。最大200MB。
+                  支持的格式: MP4, MOV, AVI, WEBM。最大文件大小: {MAX_FILE_SIZE / 1024 / 1024}MB。
                 </FormDescription>
                 <FormMessage />
               </FormItem>
