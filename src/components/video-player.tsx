@@ -1,7 +1,7 @@
 'use client';
 
 import type { Video } from '@/lib/types';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Slider } from './ui/slider';
 import {
@@ -42,6 +42,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
   const [isBuffering, setIsBuffering] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Mute/Unmute Logic
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -49,6 +50,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isMuted]);
 
+  // Play/Pause Logic
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
@@ -60,6 +62,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isPlaying, isActive, isPaidLocked]);
 
+  // Reset video when it becomes inactive
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!isActive && videoElement) {
@@ -69,17 +72,22 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
   }, [isActive]);
 
 
+  // Video event listeners
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
     const handleTimeUpdate = () => {
-      if(videoElement.currentTime > 0){
+      if(videoElement.duration > 0 && isFinite(videoElement.duration)){
         setProgress(videoElement.currentTime);
         setIsBuffering(false);
       }
     };
-    const handleDurationChange = () => setDuration(videoElement.duration);
+    const handleDurationChange = () => {
+       if (videoElement.duration > 0 && isFinite(videoElement.duration)) {
+        setDuration(videoElement.duration);
+      }
+    };
     const handleEnded = () => {
       onPlayToggle(''); 
       onVideoEnd();
@@ -156,7 +164,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         ref={videoRef}
         className="h-full w-full object-contain"
         src={video.src}
-        poster={video.thumbnail}
+        poster={video.src} // Use video src for poster to get first frame
         playsInline
         loop={false}
         preload="auto"

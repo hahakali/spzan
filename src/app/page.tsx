@@ -26,6 +26,7 @@ export default function Home() {
         const videoData = await getVideos();
         setVideos(videoData);
         if (videoData.length > 0) {
+          // Automatically play the first video on load
           setPlayingVideoId(videoData[0].id);
         }
       } catch (error) {
@@ -44,22 +45,27 @@ export default function Home() {
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap();
       setCurrent(selectedIndex);
+      // Automatically play the video when it's selected
       if (videos[selectedIndex]) {
         setPlayingVideoId(videos[selectedIndex].id);
       }
     };
+    
     api.on('select', handleSelect);
+    
+    // Initial setup
     handleSelect(); 
+
     return () => {
       api.off('select', handleSelect);
     };
   }, [api, videos]);
 
-  const handleVideoEnd = () => {
+  const handleVideoEnd = useCallback(() => {
     if (api && api.canScrollNext()) {
       api.scrollNext();
     }
-  };
+  }, [api]);
 
   const handlePlayToggle = useCallback((videoId: string) => {
     setPlayingVideoId(currentId => currentId === videoId ? null : videoId);
@@ -81,7 +87,7 @@ export default function Home() {
         orientation="vertical"
         className="h-full w-full"
         opts={{
-          loop: true,
+          loop: false, // Loop can cause issues with state management, disabling for stability
           align: "start",
           dragFree: false,
         }}
