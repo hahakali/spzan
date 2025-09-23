@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -31,7 +32,6 @@ export function Header() {
         <SidebarTrigger />
       </div>
 
-      {/* Can add a global search bar here in the future */}
       <div className="w-full flex-1"></div>
 
       <Link href="/" passHref>

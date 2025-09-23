@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -23,7 +24,7 @@ import { addVideoAction, updateVideoAction } from '@/app/admin/videos/actions';
 import { Loader2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
-const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm'];
+const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm', 'video/mov'];
 
 const formSchemaBase = z.object({
   title: z.string().min(3, '标题必须至少包含3个字符。'),
@@ -39,7 +40,8 @@ const addFormSchema = formSchemaBase.extend({
     .refine(
       (files) => ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type),
       '只支持 MP4, MOV, AVI, WEBM 格式。'
-    ),
+    )
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `文件大小不能超过 500MB。`),
 });
 
 // Schema for editing an existing video (file is optional)
@@ -47,10 +49,6 @@ const editFormSchema = formSchemaBase.extend({
   videoFile: z
     .any()
     .optional()
-    .refine(
-      (files) => files?.length > 0 ? ACCEPTED_VIDEO_TYPES.includes(files?.[0]?.type) : true,
-      '只支持 MP4, MOV, AVI, WEBM 格式。'
-    ),
 });
 
 
@@ -85,20 +83,9 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     formData.append('description', values.description);
     formData.append('type', values.type);
     
-    // Only append file if it exists (for both add and edit)
     if (values.videoFile && values.videoFile.length > 0) {
-      if (values.videoFile[0].size > MAX_FILE_SIZE) {
-         toast({
-            variant: 'destructive',
-            title: '错误',
-            description: `文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB。`,
-          });
-          setIsSubmitting(false);
-          return;
-      }
       formData.append('videoFile', values.videoFile[0]);
     } else if (!isEditMode) {
-      // This case should be caught by validation, but as a safeguard:
       toast({
         variant: 'destructive',
         title: '错误',
@@ -109,7 +96,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     }
 
     try {
-      const result = isEditMode
+      const result = isEditMode && video?.id
         ? await updateVideoAction(video.id, formData)
         : await addVideoAction(formData);
 
@@ -175,7 +162,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
                   <Input type="file" accept={ACCEPTED_VIDEO_TYPES.join(',')} {...fileRef} />
                 </FormControl>
                 <FormDescription>
-                  支持的格式: MP4, MOV, AVI, WEBM。最大文件大小: {MAX_FILE_SIZE / 1024 / 1024}MB。
+                  支持的格式: MP4, MOV, AVI, WEBM。最大文件大小: 500MB。
                 </FormDescription>
                 <FormMessage />
               </FormItem>

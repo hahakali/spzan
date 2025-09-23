@@ -1,3 +1,4 @@
+
 'use server';
 
 import { cookies } from 'next/headers';
@@ -5,13 +6,14 @@ import { cookies } from 'next/headers';
 export async function login(formData: FormData) {
   const password = formData.get('password');
 
-  // IMPORTANT: Use environment variables for sensitive data
+  // IMPORTANT: Use environment variables for sensitive data.
+  // The default password is 'admin' set in the .env file.
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (password === adminPassword) {
     const cookieStore = cookies();
     cookieStore.set('flowstream-auth', 'true', {
-      httpOnly: true,
+      httpOnly: true, // Prevent client-side JS from accessing the cookie
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/',

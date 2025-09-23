@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -23,5 +24,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Protect all admin routes and the login page itself
   matcher: ['/admin/:path*', '/login'],
 };

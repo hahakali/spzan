@@ -27,7 +27,7 @@ export default function Home() {
         const videoData = await getVideos();
         setVideos(videoData);
         if (videoData.length > 0) {
-          // Automatically play the first video on load
+          // Automatically set the first video to be ready to play
           setPlayingVideoId(videoData[0].id);
         }
       } catch (error) {
@@ -46,7 +46,7 @@ export default function Home() {
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap();
       setCurrent(selectedIndex);
-      // Automatically play the video when it's selected
+      // Automatically play the video when it's selected in the carousel
       if (videos[selectedIndex]) {
         setPlayingVideoId(videos[selectedIndex].id);
       }
@@ -88,7 +88,7 @@ export default function Home() {
         orientation="vertical"
         className="h-full w-full"
         opts={{
-          loop: false, // Loop can cause issues with state management, disabling for stability
+          loop: false, 
           align: "start",
           dragFree: false,
         }}

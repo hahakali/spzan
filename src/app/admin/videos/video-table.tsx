@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -45,7 +46,6 @@ interface VideoTableProps {
 }
 
 export function VideoTable({ initialVideos }: VideoTableProps) {
-  // We don't use state for videos anymore as filtering is handled by search params
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -98,7 +98,6 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
   
   const handleFormSuccess = () => {
     setIsFormOpen(false);
-    // Revalidation is handled by the server action, so the page will refresh with new data.
   }
 
   return (
@@ -135,12 +134,13 @@ export function VideoTable({ initialVideos }: VideoTableProps) {
             {initialVideos.map((video) => (
               <TableRow key={video.id}>
                 <TableCell>
-                  <Image
+                  {/* The thumbnail is now the video itself, so we render a video tag to get the first frame */}
+                  <video
                     src={video.thumbnail}
-                    alt={video.title}
-                    width={80}
-                    height={45}
+                    width="80"
+                    height="45"
                     className="rounded-md object-cover"
+                    preload="metadata"
                   />
                 </TableCell>
                 <TableCell className="font-medium">{video.title}</TableCell>

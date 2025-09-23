@@ -1,8 +1,8 @@
-import type { ObjectId } from 'mongodb';
 
+// Note: This interface is used for client-side components.
+// The string 'id' is a transformation of MongoDB's ObjectId.
 export interface Video {
-  id: string; // This will be the string representation of _id
-  _id?: ObjectId; // The actual MongoDB ObjectId
+  id: string;
   title: string;
   description: string;
   src: string;

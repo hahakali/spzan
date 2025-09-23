@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -26,8 +27,9 @@ export default function LoginPage() {
       const result = await login(formData);
 
       if (result.success) {
+        // On successful login, redirect to admin and refresh the page state
         router.push('/admin');
-        router.refresh(); // Force a refresh to apply middleware redirection
+        router.refresh(); 
       } else {
         setError(result.error || 'An unknown error occurred.');
       }

@@ -51,12 +51,12 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isMuted]);
 
-  // Play/Pause Logic
+  // Play/Pause Logic based on props
   useEffect(() => {
     const videoElement = videoRef.current;
     if (videoElement) {
       if (isPlaying && isActive && !isPaidLocked) {
-        videoElement.play().catch(e => console.log("Play interrupted", e));
+        videoElement.play().catch(e => console.log("Play interrupted by user or system", e));
       } else {
         videoElement.pause();
       }
@@ -81,7 +81,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     const handleTimeUpdate = () => {
       if(videoElement.duration > 0 && isFinite(videoElement.duration)){
         setProgress(videoElement.currentTime);
-        setIsBuffering(false);
+        if(isBuffering) setIsBuffering(false);
       }
     };
     const handleDurationChange = () => {
@@ -90,12 +90,11 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
       }
     };
     const handleEnded = () => {
-      onPlayToggle(''); 
       onVideoEnd();
     };
     const handleWaiting = () => {
       if(isPlaying && isActive) setIsBuffering(true);
-    }
+    };
     const handlePlaying = () => setIsBuffering(false);
     
     videoElement.addEventListener('timeupdate', handleTimeUpdate);
@@ -111,7 +110,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
       videoElement.removeEventListener('waiting', handleWaiting);
       videoElement.removeEventListener('playing', handlePlaying);
     };
-  }, [onVideoEnd, isPlaying, isActive, onPlayToggle]);
+  }, [onVideoEnd, isPlaying, isActive]);
 
   const handleTogglePlay = (e?: React.MouseEvent) => {
     e?.stopPropagation(); 
@@ -130,7 +129,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
   };
 
   const formatTime = (time: number) => {
-    if (isNaN(time) || time === 0) return '0:00';
+    if (isNaN(time) || time <= 0) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -165,7 +164,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         ref={videoRef}
         className="h-full w-full object-contain"
         src={video.src}
-        poster={video.src}
+        poster={video.thumbnail} // Use thumbnail (which is now same as src) for the poster
         playsInline
         loop={false}
         preload="auto"
@@ -177,7 +176,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         </div>
       )}
 
-      {!isPlaying && !isPaidLocked && showControls && isActive && (
+      {(!isPlaying || !isActive) && !isPaidLocked && showControls && (
          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <Play className="h-20 w-20 text-white/50" fill="white" />
         </div>
