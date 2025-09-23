@@ -27,7 +27,7 @@ export default function Home() {
         const videoData = await getVideos();
         setVideos(videoData);
         if (videoData.length > 0) {
-          // Automatically set the first video to be ready to play
+          // On initial load, set the first video to be the one playing.
           setPlayingVideoId(videoData[0].id);
         }
       } catch (error) {
@@ -43,19 +43,19 @@ export default function Home() {
     if (!api) {
       return;
     }
-    const handleSelect = () => {
-      const selectedIndex = api.selectedScrollSnap();
+
+    const handleSelect = (carouselApi: CarouselApi) => {
+      const selectedIndex = carouselApi.selectedScrollSnap();
       setCurrent(selectedIndex);
-      // Automatically play the video when it's selected in the carousel
+      // When the user scrolls to a new video, automatically set it to play.
       if (videos[selectedIndex]) {
         setPlayingVideoId(videos[selectedIndex].id);
       }
     };
     
     api.on('select', handleSelect);
-    
-    // Initial setup
-    handleSelect(); 
+    // Set initial state
+    handleSelect(api); 
 
     return () => {
       api.off('select', handleSelect);
@@ -67,7 +67,8 @@ export default function Home() {
       api.scrollNext();
     }
   }, [api]);
-
+  
+  // This function is passed to the player to handle clicks.
   const handlePlayToggle = useCallback((videoId: string) => {
     setPlayingVideoId(currentId => (currentId === videoId ? null : videoId));
   }, []);

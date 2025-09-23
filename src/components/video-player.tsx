@@ -51,27 +51,26 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
     }
   }, [isMuted]);
 
-  // Play/Pause Logic based on props
+  // Combined Play/Pause and Inactivity Logic
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (videoElement) {
-      if (isPlaying && isActive && !isPaidLocked) {
-        videoElement.play().catch(e => console.log("Play interrupted by user or system", e));
+    if (!videoElement) return;
+
+    if (isActive) {
+      if (isPlaying && !isPaidLocked) {
+        // Play if active, playing, and not locked
+        videoElement.play().catch(e => console.log("Play interrupted", e));
       } else {
+        // Pause if active but not playing, or locked
         videoElement.pause();
       }
+    } else {
+      // If inactive, always pause and reset time
+      videoElement.pause();
+      videoElement.currentTime = 0;
+      setProgress(0);
     }
   }, [isPlaying, isActive, isPaidLocked]);
-
-  // Reset video when it becomes inactive
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!isActive && videoElement) {
-        videoElement.currentTime = 0;
-        setProgress(0);
-    }
-  }, [isActive]);
-
 
   // Video event listeners
   useEffect(() => {
@@ -164,7 +163,7 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         ref={videoRef}
         className="h-full w-full object-contain"
         src={video.src}
-        poster={video.src}
+        poster={video.src} // Use the video src for poster to show the first frame
         playsInline
         loop={false}
         preload="auto"
@@ -176,13 +175,13 @@ export function VideoPlayer({ video, isActive, isPlaying, onPlayToggle, onVideoE
         </div>
       )}
 
-      {(!isPlaying || !isActive) && !isPaidLocked && (
-         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300"
-            style={{ opacity: !isPlaying && isActive ? 1 : 0 }}
-         >
+      {/* Pause/Play indicator */}
+       <div className={cn(
+            "absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300",
+            !isPlaying && isActive && !isPaidLocked ? 'opacity-100' : 'opacity-0'
+         )}>
             <Play className="h-20 w-20 text-white/50" fill="white" />
         </div>
-      )}
 
 
       <div className={cn(
